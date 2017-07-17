@@ -46,4 +46,30 @@ opensciencegrid/docker-osg-wn repository.
 
 ## genbranches
 Create `Dockerfile.in` files for each branch we want to create. Files will be created as `./branches/$BRANCHNAME`.
-Run once.
+Update this script if a new release series (e.g. OSG 3.5) comes out or a new distro version (e.g. RHEL 8) becomes supported.
+Run once to generate the files and then create Git branches in opensciencegrid/docker-osg-wn, using something like the following:
+```
+### TODO UNTESTED
+git clone git@github.com:opensciencegrid/docker-osg-wn-scripts.git
+git clone git@github.com:opensciencegrid/docker-osg-wn.git
+cd docker-osg-wn-scripts
+./genbranches
+cd ../docker-osg-wn
+for bpath in ../docker-osg-wn-scripts/branches/*; do
+    b=${bpath##*/}
+    git checkout master
+    if git branch -a | grep -w $b; then
+        git checkout $b && \
+            mv $bpath Dockerfile.in && \
+            git add Dockerfile.in && \
+            if git status --porcelain | grep -qv '^\?'; then
+                git commit -m "Update branch $b"
+            fi
+    else
+        git checkout -b $b && \
+            mv $bpath Dockerfile.in && \
+            git add Dockerfile.in && \
+            git commit -m "Add branch $b"
+    fi
+done
+```
